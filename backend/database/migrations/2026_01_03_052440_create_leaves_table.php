@@ -13,7 +13,16 @@ return new class extends Migration
     {
         Schema::create('leaves', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('type'); // sick, casual, etc.
+            $table->date('start_date');
+            $table->date('end_date');
+            $table->text('reason')->nullable();
+            $table->string('status')->default('pending'); // pending, approved, rejected
+            $table->foreignId('admin_check_by')->nullable()->constrained('users');
+            $table->text('admin_comment')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

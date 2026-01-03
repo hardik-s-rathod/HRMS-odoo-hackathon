@@ -13,6 +13,12 @@ return new class extends Migration
     {
         Schema::create('attendances', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->date('date');
+            $table->time('check_in')->nullable();
+            $table->time('check_out')->nullable();
+            $table->decimal('total_hours', 5, 2)->nullable();
+            $table->string('status')->default('absent'); // present, absent, half_day, late
             $table->timestamps();
         });
     }
