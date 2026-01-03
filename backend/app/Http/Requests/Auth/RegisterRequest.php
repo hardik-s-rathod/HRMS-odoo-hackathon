@@ -19,7 +19,7 @@ class RegisterRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'role' => ['sometimes', new Enum(Role::class)], // Only admins usually register others, but for hackathon allow self-register or seed
+            'role' => ['sometimes', new Enum(Role::class)], // Only admins usually register others, but for hackathon allow self-register
         ];
     }
 }
