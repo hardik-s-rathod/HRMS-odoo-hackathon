@@ -3,6 +3,9 @@ import { Search, MapPin, Phone, Mail, X, Briefcase, Calendar } from 'lucide-reac
 import { useAuth } from '../contexts/AuthContext';
 
 const Dashboard = () => {
+    const { user } = useAuth();
+    const isAdmin = user?.role === 'admin';
+
     const [selectedEmployee, setSelectedEmployee] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -59,10 +62,12 @@ const Dashboard = () => {
             {/* Control Bar */}
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div className="flex items-center gap-2">
-                    <button className="bg-violet-600 hover:bg-violet-700 text-white px-6 py-2 rounded-lg font-bold shadow-lg shadow-violet-500/20 transition-all text-sm uppercase tracking-wide">
-                        New
-                    </button>
-                    <span className="text-slate-400 font-light text-2xl hidden sm:block">|</span>
+                    {isAdmin && (
+                        <button className="bg-violet-600 hover:bg-violet-700 text-white px-6 py-2 rounded-lg font-bold shadow-lg shadow-violet-500/20 transition-all text-sm uppercase tracking-wide">
+                            New
+                        </button>
+                    )}
+                    {isAdmin && <span className="text-slate-400 font-light text-2xl hidden sm:block">|</span>}
                     <h1 className="text-xl font-bold text-slate-700">Employees</h1>
                 </div>
                 

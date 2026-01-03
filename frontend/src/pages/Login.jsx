@@ -90,6 +90,11 @@ const Login = () => {
             Sign In
             <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
           </button>
+
+          <div className="text-center pt-4">
+              <span className="text-slate-500 text-sm">Don't have an account? </span>
+              <a href="/register" className="text-violet-600 font-bold hover:text-violet-700 hover:underline text-sm transition-colors">Sign Up</a>
+          </div>
         </form>
       </div>
     </div>
