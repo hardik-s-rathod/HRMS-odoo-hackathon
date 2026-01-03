@@ -46,7 +46,7 @@ class AttendanceService extends BaseService
 
         $checkOutTime = Carbon::now();
         $checkInTime = Carbon::createFromFormat('H:i:s', $attendance->check_in);
-        
+
         // Fix for date parsing if check_in is just time string, use today's date
         $checkInTime->setDate($checkOutTime->year, $checkOutTime->month, $checkOutTime->day);
 
@@ -64,5 +64,10 @@ class AttendanceService extends BaseService
     {
         // Return simplified list or paginated
         return \App\Models\Attendance::where('user_id', $userId)->orderBy('date', 'desc')->get();
+    }
+
+    public function getAllAttendance()
+    {
+        return \App\Models\Attendance::with('user')->orderBy('date', 'desc')->get();
     }
 }

@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, LayoutGrid, Upload, User, Mail, Phone, Lock, Building2, ArrowRight } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const Register = () => {
     const navigate = useNavigate();
+    const { register } = useAuth();
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [error, setError] = useState('');
     
     // Form State
     const [formData, setFormData] = useState({
@@ -21,16 +24,29 @@ const Register = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Simulate Registration
+        setError('');
+
         if (formData.password !== formData.confirmPassword) {
-            alert("Passwords do not match!");
+            setError("Passwords do not match!");
             return;
         }
-        console.log('Registering Company:', formData);
-        // Redirect to login
-        navigate('/login');
+
+        const result = await register({
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+            password_confirmation: formData.confirmPassword,
+            company_name: formData.companyName,
+            phone_number: formData.phone
+        });
+
+        if (result.success) {
+            navigate('/login');
+        } else {
+            setError(result.message);
+        }
     };
 
     return (
@@ -53,6 +69,11 @@ const Register = () => {
                 </div>
 
                 <form onSubmit={handleSubmit} className="px-8 pb-8 space-y-4">
+                    {error && (
+                        <div className="bg-rose-50 border border-rose-200 text-rose-600 px-4 py-3 rounded-xl text-sm font-medium animate-[fadeIn_0.3s_ease-out]">
+                            {error}
+                        </div>
+                    )}
                     
                     {/* Company Name */}
                     <div className="space-y-1.5">

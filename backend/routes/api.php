@@ -10,18 +10,27 @@ Route::prefix('auth')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'user']);
+        Route::put('/profile', [AuthController::class, 'updateProfile']);
     });
 });
 
 Route::middleware('auth:sanctum')->group(function () {
+    // Public Employee Routes (View Only)
+    Route::get('/employees', [\App\Http\Controllers\EmployeeController::class, 'index']);
+    Route::get('/employees/{id}', [\App\Http\Controllers\EmployeeController::class, 'show']);
+
     Route::middleware('role:admin,hr')->group(function () {
-        Route::apiResource('employees', \App\Http\Controllers\EmployeeController::class);
+        Route::post('/employees', [\App\Http\Controllers\EmployeeController::class, 'store']);
+        Route::put('/employees/{id}', [\App\Http\Controllers\EmployeeController::class, 'update']);
+        Route::delete('/employees/{id}', [\App\Http\Controllers\EmployeeController::class, 'destroy']);
     });
 
     Route::prefix('attendance')->group(function () {
         Route::post('check-in', [\App\Http\Controllers\AttendanceController::class, 'checkIn']);
         Route::post('check-out', [\App\Http\Controllers\AttendanceController::class, 'checkOut']);
         Route::get('me', [\App\Http\Controllers\AttendanceController::class, 'myAttendance']);
+
+        Route::middleware('role:admin,hr')->get('all', [\App\Http\Controllers\AttendanceController::class, 'allAttendance']);
     });
 
     Route::prefix('leaves')->group(function () {

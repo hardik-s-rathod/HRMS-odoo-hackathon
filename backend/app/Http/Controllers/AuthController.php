@@ -38,6 +38,25 @@ class AuthController extends Controller
 
     public function user(Request $request): JsonResponse
     {
-        return ApiResponse::success($request->user());
+        return ApiResponse::success($request->user()->load('employee'));
+    }
+
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $data = $request->validate([
+            'phone_number' => 'nullable|string',
+            'address' => 'nullable|string',
+        ]);
+
+        if (isset($data['phone_number'])) {
+            $user->update(['phone_number' => $data['phone_number']]);
+        }
+
+        if (isset($data['address']) && $user->employee) {
+            $user->employee->update(['address' => $data['address']]);
+        }
+
+        return ApiResponse::success($user->load('employee'), 'Profile updated successfully');
     }
 }

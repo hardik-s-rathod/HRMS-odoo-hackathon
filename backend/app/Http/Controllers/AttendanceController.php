@@ -32,4 +32,10 @@ class AttendanceController extends Controller
         $attendances = $this->attendanceService->getMyAttendance($request->user()->id);
         return ApiResponse::success($attendances);
     }
+
+    public function allAttendance()
+    {
+        $attendances = $this->attendanceService->getAllAttendance();
+        return ApiResponse::success($attendances);
+    }
 }

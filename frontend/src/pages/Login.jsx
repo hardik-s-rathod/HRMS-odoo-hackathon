@@ -6,14 +6,21 @@ import { User, Lock, ArrowRight, LayoutGrid } from 'lucide-react';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('employee');
+  const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    login(role);
-    navigate('/');
+    setError('');
+    
+    const result = await login(email, password);
+    
+    if (result.success) {
+      navigate('/');
+    } else {
+      setError(result.message);
+    }
   };
 
   return (
@@ -36,6 +43,12 @@ const Login = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="bg-rose-50 border border-rose-200 text-rose-600 px-4 py-3 rounded-xl text-sm font-medium animate-[fadeIn_0.3s_ease-out]">
+              {error}
+            </div>
+          )}
+
           <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700 ml-1">Login ID / Email</label>
             <div className="relative group">
@@ -64,23 +77,6 @@ const Login = () => {
                 required
               />
             </div>
-          </div>
-
-          <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
-            {['employee', 'admin'].map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setRole(r)}
-                className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200 capitalize ${
-                  role === r
-                    ? 'bg-white text-violet-700 shadow-sm border border-slate-100'
-                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
-                }`}
-              >
-                {r}
-              </button>
-            ))}
           </div>
 
           <button

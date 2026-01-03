@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Plus, Check, X, Calendar, Search, Filter } from 'lucide-react';
+import api from '../api/axios';
+import { Plus, Check, X, Calendar, Search, Filter, Loader } from 'lucide-react';
 import TimeOffRequestModal from '../components/TimeOffRequestModal';
 
 const Leave = () => {
@@ -8,36 +9,61 @@ const Leave = () => {
     const isAdmin = user?.role === 'admin';
     const [activeTab, setActiveTab] = useState(isAdmin ? 'allocation' : 'timeoff');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    
+    const [requests, setRequests] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // Initial Mock Data
-    const [requests, setRequests] = useState([
-        { id: 1, name: 'John Doe', startDate: '2025-10-28', endDate: '2025-10-28', type: 'Paid Time Off', status: 'Pending', duration: '1.00' },
-        { id: 2, name: 'Sarah Smith', startDate: '2025-11-05', endDate: '2025-11-06', type: 'Sick Time Off', status: 'Approved', duration: '2.00' },
-        { id: 3, name: 'Mike Johnson', startDate: '2025-12-01', endDate: '2025-12-05', type: 'Unpaid', status: 'Rejected', duration: '5.00' },
-    ]);
+    // Fetch Requests
+    useEffect(() => {
+        fetchLeaves();
+    }, [isAdmin]);
+
+    const fetchLeaves = async () => {
+        setLoading(true);
+        try {
+            const endpoint = isAdmin ? '/leaves/all' : '/leaves';
+            const response = await api.get(endpoint);
+            setRequests(response.data.data || []);
+        } catch (error) {
+            console.error("Failed to fetch leaves", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // Handle New Request Submission
-    const handleCreateRequest = (newRequest) => {
-        const request = {
-            id: requests.length + 1,
-            name: user.name,
-            ...newRequest
-        };
-        setRequests([request, ...requests]);
+    const handleCreateRequest = async (newRequest) => {
+        try {
+            await api.post('/leaves', {
+                 ...newRequest,
+                 start_date: newRequest.startDate,
+                 end_date: newRequest.endDate,
+                 reason: newRequest.notes
+            });
+            fetchLeaves(); 
+            setIsModalOpen(false);
+        } catch (error) {
+            console.error("Failed to create leave", error);
+            alert("Failed to apply leave");
+        }
     };
 
     // Handle Admin Approval/Rejection
-    const handleStatusUpdate = (id, newStatus) => {
-        setRequests(requests.map(req => 
-            req.id === id ? { ...req, status: newStatus } : req
-        ));
+    const handleStatusUpdate = async (id, newStatus) => {
+        try {
+            await api.put(`/leaves/${id}/status`, { status: newStatus.toLowerCase(), comment: 'Admin action' });
+            // Optimistic update
+            setRequests(requests.map(req => 
+                req.id === id ? { ...req, status: newStatus } : req
+            ));
+        } catch (error) {
+            console.error("Failed to update status", error);
+            alert("Failed to update status");
+        }
     };
 
-    // Filter requests based on role
-    // Admin sees ALL. Employee sees ONLY THEIR OWN.
-    const displayedRequests = isAdmin 
-        ? requests 
-        : requests.filter(req => req.name === user.name || req.name === 'John Employee'); // 'John Employee' is the mock name
+    // Filter logic is now handled by backend endpoints
+    const displayedRequests = requests; 
 
     return (
         <div className="max-w-7xl mx-auto space-y-6">
@@ -119,11 +145,13 @@ const Leave = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {displayedRequests.map((req) => (
+                        {loading ? (
+                             <tr><td colSpan={isAdmin ? 7 : 6} className="px-6 py-8 text-center text-slate-400"><Loader className="h-6 w-6 animate-spin mx-auto"/></td></tr>
+                        ) : displayedRequests.map((req) => (
                             <tr key={req.id} className="hover:bg-slate-50/50 transition-colors">
-                                <td className="px-6 py-4 font-semibold text-slate-800">{req.name}</td>
-                                <td className="px-6 py-4 font-mono text-slate-600">{req.startDate}</td>
-                                <td className="px-6 py-4 font-mono text-slate-600">{req.endDate}</td>
+                                <td className="px-6 py-4 font-semibold text-slate-800">{req.user?.name || req.name}</td>
+                                <td className="px-6 py-4 font-mono text-slate-600">{req.start_date || req.startDate}</td>
+                                <td className="px-6 py-4 font-mono text-slate-600">{req.end_date || req.endDate}</td>
                                 <td className="px-6 py-4">
                                     <span className={`px-2 py-1 rounded text-xs font-bold ${
                                         req.type === 'Paid Time Off' ? 'bg-sky-100 text-sky-700' : 
@@ -132,16 +160,16 @@ const Leave = () => {
                                         {req.type}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4 font-mono text-slate-600">{req.duration} Days</td>
+                                <td className="px-6 py-4 font-mono text-slate-600">{req.days || req.duration} Days</td>
                                 <td className="px-6 py-4">
-                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
-                                        req.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' :
-                                        req.status === 'Rejected' ? 'bg-rose-100 text-rose-700' :
+                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold capitalize ${
+                                        req.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+                                        req.status === 'rejected' ? 'bg-rose-100 text-rose-700' :
                                         'bg-amber-100 text-amber-700'
                                     }`}>
                                         <span className={`h-1.5 w-1.5 rounded-full ${
-                                            req.status === 'Approved' ? 'bg-emerald-500' :
-                                            req.status === 'Rejected' ? 'bg-rose-500' :
+                                            req.status === 'approved' ? 'bg-emerald-500' :
+                                            req.status === 'rejected' ? 'bg-rose-500' :
                                             'bg-amber-500'
                                         }`}></span>
                                         {req.status}
@@ -150,7 +178,7 @@ const Leave = () => {
                                 
                                 {isAdmin && (
                                     <td className="px-6 py-4">
-                                        {req.status === 'Pending' && (
+                                        {req.status === 'pending' && (
                                             <div className="flex items-center justify-center gap-2">
                                                 <button 
                                                     onClick={() => handleStatusUpdate(req.id, 'Approved')}
@@ -172,7 +200,7 @@ const Leave = () => {
                                 )}
                             </tr>
                         ))}
-                        {displayedRequests.length === 0 && (
+                        {!loading && displayedRequests.length === 0 && (
                             <tr>
                                 <td colSpan={isAdmin ? 7 : 6} className="px-6 py-8 text-center text-slate-400 italic">
                                     No records found.
